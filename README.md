@@ -12,6 +12,7 @@ The lab's primer registry. One curated table, `primers.tsv`, is the source of tr
 | `R/primer_utils.R` | Validation and property functions (base R, no packages needed). |
 | `R/validate.R` | Checks `primers.tsv`; exits non-zero on errors. |
 | `R/build.R` | Validates, then regenerates `build/`. |
+| `R/export_idt.R`, `R/idt.R` | Select primers and write IDT order files (see [Ordering from IDT](#ordering-from-idt)). |
 | `tests/` | Unit tests and fixtures. |
 
 ## Columns in `primers.tsv`
@@ -50,6 +51,37 @@ CI runs the tests, validates the table, and fails if `build/` was not regenerate
 Errors (block the build): missing or extra columns, empty required fields, duplicate IDs, invalid characters in a sequence, `direction` not `F`/`R`, a `partner_id` that doesn't exist or isn't reciprocal, partners with the same direction.
 
 Warnings: sequences shorter than 10 nt, ambiguity codes (Tm is left blank), identical sequences under different IDs, partners with a different target or species.
+
+## Ordering from IDT
+
+`R/export_idt.R` selects primers from `primers.tsv` and writes a file to upload to IDT.
+
+```bash
+# preview a selection (writes nothing)
+Rscript R/export_idt.R --name=esrrb --list
+# tubes: tab-separated text to paste or upload into IDT's bulk input
+Rscript R/export_idt.R --ids=HP0001-HP0006,HP0019
+# the same as an Excel file, at 100 nmol with PAGE purification
+Rscript R/export_idt.R --target="lefty|xist" --format=tubes-xlsx --scale=100nm --purification=PAGE
+# a 96-well plate upload (Excel, one worksheet per plate)
+Rscript R/export_idt.R --notes="ChIP target: Oct4" --format=plate
+```
+
+Selection: `--ids` takes IDs and ranges; `--name`, `--target` and `--notes` take case-insensitive regular expressions. Filters combine with AND, and with none every primer is selected. The partner of each selected primer is added automatically so pairs are never ordered half-complete; turn that off with `--no-partners`.
+
+| Format | File | Columns |
+|---|---|---|
+| `tubes` (default) | `.txt`, tab-separated | Name, Sequence, Scale, Purification |
+| `tubes-xlsx` | `.xlsx` | Name, Sequence, Scale, Purification |
+| `plate` | `.xlsx`, one sheet per 96-well plate | Well Position, Name, Sequence |
+
+- Names are `<primer_id>_<name>`, so tubes arriving from IDT can be matched back to the registry.
+- Scale: `25nm` (default), `100nm`, `250nm`, `1um`, `5um`, `10um`. Purification: `STD` (default), `PAGE`, `HPLC`, `IEHPLC`, `RNASE`, `DUALHPLC`, `PAGEHPLC`. Scale and purification apply to tube orders; plates take those options in IDT's plate form.
+- Plates fill down columns (A1, B1, … H1, A2) by default; use `--fill=rows` for A1, A2, … A12, B1. IDT may require a minimum number of oligos per plate (24 is commonly quoted), so the script warns about small plates.
+- Output goes to `orders/idt_<format>_<date>.<ext>` unless you pass `--out`. `orders/` is git-ignored.
+- The table is validated first; nothing is exported while it has errors.
+
+These layouts follow IDT's bulk-input and plate-upload templates. If IDT changes its forms, check the current template on the order page.
 
 ## Tm calculation
 
