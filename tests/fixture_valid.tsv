@@ -1,0 +1,4 @@
+primer_id	name	sequence	target	species	direction	partner_id	notes
+T001	test_F	ACGTACGTACGTACGTACGT	GENE1	Homo sapiens	F	T002	
+T002	test_R	GCGCATATGCGCATATGCGC	GENE1	Homo sapiens	R	T001	
+T003	degenerate_F	ACGTNACGTRACGTACGTAC	GENE2	Mus musculus	F		has ambiguity codes

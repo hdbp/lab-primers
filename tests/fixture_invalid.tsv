@@ -1,0 +1,5 @@
+primer_id	name	sequence	target	species	direction	partner_id	notes
+B001	bad_seq	acgt ACGT	GENE1	Homo sapiens	F	B002	
+B002	wrong_dir	GCGCATATGCGCATATGCGC	GENE1	Homo sapiens	F	B001	
+B002	dup_id	GCGCATATGCGCATATGCGC	GENE1	Homo sapiens	X	B999	
+B004	one_way	ACGTACGTACGTACGTACGT	GENE1	Homo sapiens	R	B002	
