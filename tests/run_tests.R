@@ -62,6 +62,18 @@ sheet <- readLines(unz(xl, "xl/worksheets/sheet1.xml"), warn = FALSE)
 check("write_xlsx sheet has headers and data",
       grepl("<t>Well Position</t>", sheet) && grepl("<t>T001_test_F</t>", sheet) && grepl('r="C97"', sheet))
 
+source("R/html.R")
+check("json_string escapes quotes, backslashes, tabs and </script>",
+      identical(json_string('a"b\\c\td</script>'), '"a\\"b\\\\c\\td<\\/script>"'))
+check("primers_json writes null for missing numbers",
+      identical(primers_json(data.frame(id = "X1", tm = NA_real_)), '[\n{"id":"X1","tm":null}\n]'))
+check("primers_json of no rows is []", identical(primers_json(ok[0, ]), "[]"))
+page <- tempfile(fileext = ".html")
+write_html(annotate_primers(ok), "web/template.html", page)
+page_txt <- paste(readLines(page, warn = FALSE), collapse = "\n")
+check("page embeds the primer table",
+      grepl('"primer_id":"T001"', page_txt, fixed = TRUE) && !grepl("__PRIMERS_JSON__", page_txt, fixed = TRUE))
+
 hdr <- read_primers("primers.tsv")
 check("primers.tsv has the expected columns", identical(names(hdr), PRIMER_COLUMNS))
 
