@@ -1,8 +1,9 @@
 # Core primer utilities: reading, validation, and derived properties
 # (length, GC%, Tm). Base R only, so the repo runs anywhere R is installed.
 
-PRIMER_COLUMNS <- c("primer_id", "name", "sequence", "target", "species",
-                    "direction", "partner_id", "notes")
+# One row per primer pair.
+PRIMER_COLUMNS <- c("pair_id", "name", "target", "species", "forward", "reverse", "notes")
+SEQ_COLUMNS <- c("forward", "reverse")
 
 IUPAC_DNA <- "ACGTRYSWKMBDHVN"
 
@@ -82,74 +83,65 @@ validate_primers <- function(df) {
   if (nrow(df) == 0) return(list(errors = errors, warnings = warnings))
 
   row <- seq_len(nrow(df)) + 1L  # file line number (header is line 1)
-  where <- function(i) sprintf("line %d (%s)", row[i], df$primer_id[i])
+  where <- function(i) sprintf("line %d (%s)", row[i], df$pair_id[i])
 
-  for (col in c("primer_id", "name", "sequence", "target", "species", "direction")) {
+  for (col in setdiff(PRIMER_COLUMNS, "notes")) {
     for (i in which(df[[col]] == "")) err(where(i), ": empty ", col)
   }
 
-  bad_id <- which(df$primer_id != "" & !grepl("^[A-Za-z0-9_.-]+$", df$primer_id))
-  for (i in bad_id) err(where(i), ": primer_id may only contain letters, digits, '_', '.', '-'")
-  for (id in unique(df$primer_id[duplicated(df$primer_id) & df$primer_id != ""])) {
-    err("duplicate primer_id '", id, "' on lines ",
-        paste(row[df$primer_id == id], collapse = ", "))
+  bad_id <- which(df$pair_id != "" & !grepl("^[A-Za-z0-9_.-]+$", df$pair_id))
+  for (i in bad_id) err(where(i), ": pair_id may only contain letters, digits, '_', '.', '-'")
+  for (id in unique(df$pair_id[duplicated(df$pair_id) & df$pair_id != ""])) {
+    err("duplicate pair_id '", id, "' on lines ",
+        paste(row[df$pair_id == id], collapse = ", "))
   }
 
-  bad_seq <- which(df$sequence != "" & !grepl(paste0("^[", IUPAC_DNA, "]+$"), df$sequence))
-  for (i in bad_seq) {
-    err(where(i), ": sequence must be uppercase IUPAC DNA (", IUPAC_DNA,
-        ") with no spaces or modifications")
-  }
-  short <- which(df$sequence != "" & nchar(df$sequence) < 10)
-  for (i in short) warn(where(i), ": sequence is only ", nchar(df$sequence[i]), " nt")
-  ambig <- which(grepl("[^ACGT]", df$sequence) & !seq_len(nrow(df)) %in% bad_seq &
-                   df$sequence != "")
-  for (i in ambig) warn(where(i), ": sequence contains ambiguity codes; Tm not computed")
-
-  for (i in which(df$direction != "" & !df$direction %in% c("F", "R"))) {
-    err(where(i), ": direction must be 'F' or 'R', got '", df$direction[i], "'")
+  for (col in SEQ_COLUMNS) {
+    s <- df[[col]]
+    bad_seq <- which(s != "" & !grepl(paste0("^[", IUPAC_DNA, "]+$"), s))
+    for (i in bad_seq) {
+      err(where(i), ": ", col, " must be uppercase IUPAC DNA (", IUPAC_DNA,
+          ") with no spaces or modifications")
+    }
+    for (i in which(s != "" & nchar(s) < 10)) warn(where(i), ": ", col, " is only ", nchar(s[i]), " nt")
+    ambig <- which(s != "" & grepl("[^ACGT]", s) & !seq_len(nrow(df)) %in% bad_seq)
+    for (i in ambig) warn(where(i), ": ", col, " contains ambiguity codes; Tm not computed")
   }
 
-  dup_seq <- unique(df$sequence[duplicated(df$sequence) & df$sequence != ""])
-  for (s in dup_seq) {
-    warn("identical sequence shared by: ",
-         paste(df$primer_id[df$sequence == s], collapse = ", "))
-  }
-
-  ids <- df$primer_id
-  for (i in which(df$partner_id != "")) {
-    p <- df$partner_id[i]
-    j <- match(p, ids)
-    if (is.na(j)) { err(where(i), ": partner_id '", p, "' does not exist"); next }
-    if (j == i) { err(where(i), ": primer lists itself as partner"); next }
-    if (df$partner_id[j] != ids[i]) {
-      err(where(i), ": partner '", p, "' does not list '", ids[i], "' back as its partner")
-    }
-    if (df$direction[i] == df$direction[j] && df$direction[i] %in% c("F", "R")) {
-      err(where(i), ": partner '", p, "' has the same direction (", df$direction[i], ")")
-    }
-    if (df$target[i] != df$target[j]) {
-      warn(where(i), ": partner '", p, "' has a different target ('", df$target[j], "')")
-    }
-    if (df$species[i] != df$species[j]) {
-      warn(where(i), ": partner '", p, "' has a different species ('", df$species[j], "')")
-    }
+  # The same oligo under two pairs (or as both primers of one pair).
+  oligo <- c(df$forward, df$reverse)
+  label <- c(paste0(df$pair_id, " forward"), paste0(df$pair_id, " reverse"))
+  for (s in unique(oligo[duplicated(oligo) & oligo != ""])) {
+    warn("identical sequence shared by: ", paste(label[oligo == s], collapse = ", "))
   }
 
   list(errors = errors, warnings = warnings)
 }
 
 annotate_primers <- function(df, na_mM = 50, primer_nM = 250) {
-  df$length <- nchar(df$sequence)
-  df$gc_pct <- gc_percent(df$sequence)
-  df$tm_c <- tm_nn(df$sequence, na_mM = na_mM, primer_nM = primer_nM)
-  partner_tm <- df$tm_c[match(df$partner_id, df$primer_id)]
-  df$pair_tm_diff <- round(abs(df$tm_c - partner_tm), 1)
+  for (col in SEQ_COLUMNS) {
+    df[[paste0(col, "_length")]] <- nchar(df[[col]])
+    df[[paste0(col, "_gc_pct")]] <- gc_percent(df[[col]])
+    df[[paste0(col, "_tm_c")]] <- tm_nn(df[[col]], na_mM = na_mM, primer_nM = primer_nM)
+  }
+  df$tm_diff <- round(abs(df$forward_tm_c - df$reverse_tm_c), 1)
   df
 }
 
+# One oligo per row (forward then reverse for each pair), named
+# <pair_id>_<name>_F / _R. This is what gets ordered and written to FASTA.
+pair_oligos <- function(df) {
+  n <- nrow(df)
+  i <- rep(seq_len(n), each = 2)
+  dir <- rep(c("F", "R"), times = n)
+  data.frame(oligo = paste(df$pair_id[i], df$name[i], dir, sep = "_"),
+             sequence = c(rbind(df$forward, df$reverse)),
+             pair_id = df$pair_id[i], direction = dir,
+             target = df$target[i], species = df$species[i])
+}
+
 write_fasta <- function(df, path) {
-  hdr <- sprintf(">%s %s|%s|%s|%s", df$primer_id, df$name, df$target,
-                 df$species, df$direction)
-  writeLines(c(rbind(hdr, df$sequence)), path)
+  o <- pair_oligos(df)
+  hdr <- sprintf(">%s %s|%s|%s", o$oligo, o$target, o$species, o$direction)
+  writeLines(c(rbind(hdr, o$sequence)), path)
 }

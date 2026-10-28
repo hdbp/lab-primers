@@ -51,8 +51,7 @@ td.seq { font-family: var(--mono); font-size: 12.5px; word-break: break-all; min
 td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.id { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
 td.target { max-width: 260px; }
-.dir { display: inline-block; min-width: 18px; text-align: center; border-radius: 4px; font-size: 12px;
-  font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.seqinfo { display: block; font-family: inherit; font-size: 11.5px; color: var(--muted); word-break: normal; }
 .flag { color: var(--warn); font-weight: 600; }
 .notes-toggle { color: var(--accent); background: none; border: none; padding: 0; font-size: 12.5px; }
 tr.notes td { color: var(--muted); font-size: 13px; background: var(--bg); }
@@ -77,10 +76,9 @@ tr.notes td { color: var(--muted); font-size: 13px; background: var(--bg); }
 </header>
 
 <div class="controls">
-  <input type="search" id="q" placeholder='Search ID, name, target, sequence… ("quoted phrase")' aria-label="Search primers">
+  <input type="search" id="q" placeholder='Search ID, name, target, sequence… ("quoted phrase")' aria-label="Search primer pairs">
   <select id="species" aria-label="Species"><option value="">All species</option></select>
   <label class="inline"><input type="checkbox" id="inNotes"> Include notes</label>
-  <label class="inline"><input type="checkbox" id="pairs" checked> Keep pairs together</label>
   <button id="selVisible">Select shown</button>
   <button id="clear">Clear selection</button>
 </div>
@@ -91,13 +89,13 @@ tr.notes td { color: var(--muted); font-size: 13px; background: var(--bg); }
       <thead><tr id="head"></tr></thead>
       <tbody id="body"></tbody>
     </table>
-    <div class="empty" id="empty" hidden>No primers match.</div>
+    <div class="empty" id="empty" hidden>No primer pairs match.</div>
   </div>
 </div>
 
 <div class="bar">
   <div class="bar-inner">
-    <span><span class="count" id="count">0</span>selected</span>
+    <span><span class="count" id="count">0</span>pairs selected</span>
     <select id="format" aria-label="IDT format">
       <option value="tubes">IDT tubes – text (bulk input)</option>
       <option value="tubes-xlsx">IDT tubes – Excel</option>
@@ -118,50 +116,37 @@ tr.notes td { color: var(--muted); font-size: 13px; background: var(--bg); }
 
 <script>
 const PRIMERS = [
-{"primer_id":"HP0001","name":"ChIP_Oct4_Pou5f1-DE_F","sequence":"GACGGCAGATGCATAACAAA","target":"Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)","species":"Mus musculus","direction":"F","partner_id":"HP0002","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr17:35504043-35504134, 92 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 229/225 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 229/225, Esrrb 40/32, Nanog 214/184. source: PMC4686221, doi:10.1371/journal.pone.0145336, Used as ChIP primer ('ChIP', Table 1). Not yet bench-validated.","length":20,"gc_pct":45,"tm_c":53.3,"pair_tm_diff":3.1},
-{"primer_id":"HP0002","name":"ChIP_Oct4_Pou5f1-DE_R","sequence":"AGGAAGGGCTAGGACGAGAG","target":"Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)","species":"Mus musculus","direction":"R","partner_id":"HP0001","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr17:35504043-35504134, 92 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 229/225 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 229/225, Esrrb 40/32, Nanog 214/184. source: PMC4686221, doi:10.1371/journal.pone.0145336, Used as ChIP primer ('ChIP', Table 1). Not yet bench-validated.","length":20,"gc_pct":60,"tm_c":56.4,"pair_tm_diff":3.1},
-{"primer_id":"HP0003","name":"ChIP_Oct4_Nanog-CR1_F","sequence":"GGTGGACCCTGCAGGTGGGATTAAC","target":"Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)","species":"Mus musculus","direction":"F","partner_id":"HP0004","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr6:122707433-122707516, 84 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 163/149 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 163/149, Esrrb 45/31, Nanog -/23. source: PMC3985664, doi:10.1093/nar/gku092, Nanog CR1 primers used for Oct4 ChIP. Not yet bench-validated.","length":25,"gc_pct":60,"tm_c":62.8,"pair_tm_diff":3.1},
-{"primer_id":"HP0004","name":"ChIP_Oct4_Nanog-CR1_R","sequence":"CCCCTATTCTCCCAGGCACCCAGGC","target":"Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)","species":"Mus musculus","direction":"R","partner_id":"HP0003","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr6:122707433-122707516, 84 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 163/149 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 163/149, Esrrb 45/31, Nanog -/23. source: PMC3985664, doi:10.1093/nar/gku092, Nanog CR1 primers used for Oct4 ChIP. Not yet bench-validated.","length":25,"gc_pct":68,"tm_c":65.9,"pair_tm_diff":3.1},
-{"primer_id":"HP0005","name":"ChIP_Oct4_Rif1-prom_F","sequence":"CCAATTCTAGGCAGTTGCCT","target":"Rif1 promoter (chr2:52,072,165-52,072,292)","species":"Mus musculus","direction":"F","partner_id":"HP0006","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr2:52072165-52072292, 128 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 256/268 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 256/268, Esrrb 56/39, Nanog 82/120. source: PMC4669749, doi:10.1038/cddis.2014.551, Rif1-1, ChIP-qPCR primers; Oct4 ChIP. Not yet bench-validated.","length":20,"gc_pct":50,"tm_c":54.2,"pair_tm_diff":5.5},
-{"primer_id":"HP0006","name":"ChIP_Oct4_Rif1-prom_R","sequence":"GGGAGTGTTGCTAAAGG","target":"Rif1 promoter (chr2:52,072,165-52,072,292)","species":"Mus musculus","direction":"R","partner_id":"HP0005","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr2:52072165-52072292, 128 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 256/268 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 256/268, Esrrb 56/39, Nanog 82/120. source: PMC4669749, doi:10.1038/cddis.2014.551, Rif1-1, ChIP-qPCR primers; Oct4 ChIP. Not yet bench-validated.","length":17,"gc_pct":52.9,"tm_c":48.7,"pair_tm_diff":5.5},
-{"primer_id":"HP0007","name":"ChIP_Esrrb_Sox2-SE_F","sequence":"TAGAGGAAGGAGCTGGAGGA","target":"Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)","species":"Mus musculus","direction":"F","partner_id":"HP0008","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr3:34761502-34761711, 210 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 96/52 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 39/48, Esrrb 96/52, Nanog 61/89. source: PMC8149872, doi:10.1038/s41467-021-23500-6, Sox2 SE, ChIP-qPCR primers. Not yet bench-validated.","length":20,"gc_pct":55,"tm_c":55,"pair_tm_diff":0.4},
-{"primer_id":"HP0008","name":"ChIP_Esrrb_Sox2-SE_R","sequence":"AAGGAAAGAAGGAGGGACGG","target":"Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)","species":"Mus musculus","direction":"R","partner_id":"HP0007","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr3:34761502-34761711, 210 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 96/52 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 39/48, Esrrb 96/52, Nanog 61/89. source: PMC8149872, doi:10.1038/s41467-021-23500-6, Sox2 SE, ChIP-qPCR primers. Not yet bench-validated.","length":20,"gc_pct":55,"tm_c":55.4,"pair_tm_diff":0.4},
-{"primer_id":"HP0009","name":"ChIP_Esrrb_Specc1-int_F","sequence":"GTGTTAGAGTGCTTTGTCCCC","target":"Specc1 intronic site (chr11:62,215,225-62,215,303)","species":"Mus musculus","direction":"F","partner_id":"HP0010","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr11:62215225-62215303, 79 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 47/70 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 136/147, Esrrb 47/70, Nanog 281/298. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r7_set2, ChIP-qPCR. Not yet bench-validated.","length":21,"gc_pct":52.4,"tm_c":55.2,"pair_tm_diff":0.8},
-{"primer_id":"HP0010","name":"ChIP_Esrrb_Specc1-int_R","sequence":"CTCAAAGGAGACAGGTGCCA","target":"Specc1 intronic site (chr11:62,215,225-62,215,303)","species":"Mus musculus","direction":"R","partner_id":"HP0009","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr11:62215225-62215303, 79 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 47/70 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 136/147, Esrrb 47/70, Nanog 281/298. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r7_set2, ChIP-qPCR. Not yet bench-validated.","length":20,"gc_pct":55,"tm_c":56,"pair_tm_diff":0.8},
-{"primer_id":"HP0011","name":"ChIP_Esrrb_Pramel7-up_F","sequence":"GTGTAACTGAAGGTGACCCTGAAC","target":"Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)","species":"Mus musculus","direction":"F","partner_id":"HP0012","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr2:87481269-87481382, 114 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 90/38 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 85/94, Esrrb 90/38, Nanog 50/55. source: PMC13601577, doi:10.1038/s44319-026-00881-7, Pramel7, ChIP-qPCR primers. Not yet bench-validated.","length":24,"gc_pct":50,"tm_c":57.2,"pair_tm_diff":0.3},
-{"primer_id":"HP0012","name":"ChIP_Esrrb_Pramel7-up_R","sequence":"AGTCTAAAGGTTCAACAGCCACAG","target":"Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)","species":"Mus musculus","direction":"R","partner_id":"HP0011","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr2:87481269-87481382, 114 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 90/38 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 85/94, Esrrb 90/38, Nanog 50/55. source: PMC13601577, doi:10.1038/s44319-026-00881-7, Pramel7, ChIP-qPCR primers. Not yet bench-validated.","length":24,"gc_pct":45.8,"tm_c":56.9,"pair_tm_diff":0.3},
-{"primer_id":"HP0013","name":"ChIP_Nanog_Mgat4e-up_F","sequence":"CCCCACAGACTGAGAATGGC","target":"Mgat4e upstream site (chr1:134,535,097-134,535,260)","species":"Mus musculus","direction":"F","partner_id":"HP0014","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:134535097-134535260, 164 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 333/285 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 138/134, Esrrb -/-, Nanog 333/285. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r3_set1, ChIP-qPCR of Nanog-bound region. Not yet bench-validated.","length":20,"gc_pct":60,"tm_c":56.8,"pair_tm_diff":0.3},
-{"primer_id":"HP0014","name":"ChIP_Nanog_Mgat4e-up_R","sequence":"CCCCTACCTTTGGCATCCTG","target":"Mgat4e upstream site (chr1:134,535,097-134,535,260)","species":"Mus musculus","direction":"R","partner_id":"HP0013","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:134535097-134535260, 164 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 333/285 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 138/134, Esrrb -/-, Nanog 333/285. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r3_set1, ChIP-qPCR of Nanog-bound region. Not yet bench-validated.","length":20,"gc_pct":60,"tm_c":56.5,"pair_tm_diff":0.3},
-{"primer_id":"HP0015","name":"ChIP_Nanog_Xist-int1B_F","sequence":"ATGTTTCCTTTTGAAGCAGTTACTTGTAC","target":"Xist intron 1 (site B) (chrX:103,472,430-103,472,528)","species":"Mus musculus","direction":"F","partner_id":"HP0016","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chrX:103472430-103472528, 99 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 204/253 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 181/193, Esrrb -/-, Nanog 204/253. source: PMC2933617, doi:10.1186/1471-213X-10-90, primers p65/p66, Xist intron 1 site B; Oct4 ChIP. Not yet bench-validated.","length":29,"gc_pct":34.5,"tm_c":56.6,"pair_tm_diff":0},
-{"primer_id":"HP0016","name":"ChIP_Nanog_Xist-int1B_R","sequence":"CATTGTCTGGCTCTCTAGGTGATAATAC","target":"Xist intron 1 (site B) (chrX:103,472,430-103,472,528)","species":"Mus musculus","direction":"R","partner_id":"HP0015","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chrX:103472430-103472528, 99 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 204/253 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 181/193, Esrrb -/-, Nanog 204/253. source: PMC2933617, doi:10.1186/1471-213X-10-90, primers p65/p66, Xist intron 1 site B; Oct4 ChIP. Not yet bench-validated.","length":28,"gc_pct":42.9,"tm_c":56.6,"pair_tm_diff":0},
-{"primer_id":"HP0017","name":"ChIP_Nanog_Lefty1-up_F","sequence":"GTAGCCAGCAGACAGGACAA","target":"Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)","species":"Mus musculus","direction":"F","partner_id":"HP0018","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:180924761-180924890, 130 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 193/277 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 152/176, Esrrb 24/-, Nanog 193/277. source: PMC4669749, doi:10.1038/cddis.2014.551, Lefty1, ChIP-qPCR primers. Not yet bench-validated.","length":20,"gc_pct":55,"tm_c":56.1,"pair_tm_diff":6.6},
-{"primer_id":"HP0018","name":"ChIP_Nanog_Lefty1-up_R","sequence":"ATCCCCAATCCACATTCA","target":"Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)","species":"Mus musculus","direction":"R","partner_id":"HP0017","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:180924761-180924890, 130 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 193/277 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 152/176, Esrrb 24/-, Nanog 193/277. source: PMC4669749, doi:10.1038/cddis.2014.551, Lefty1, ChIP-qPCR primers. Not yet bench-validated.","length":18,"gc_pct":44.4,"tm_c":49.5,"pair_tm_diff":6.6},
-{"primer_id":"HP0019","name":"ChIP_NEG_desert-chr15_F","sequence":"TCCTCCCCATCTGTGTCATC","target":"Gene desert chr15 (chr15:70,644,478-70,644,564)","species":"Mus musculus","direction":"F","partner_id":"HP0020","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr15:70644478-70644564, 87 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest Oct4/Esrrb/Nanog peak 279 kb). source: PMC12325602, doi:10.1038/s41598-025-13316-5, Gene desert, ChIP-qPCR negative. Not yet bench-validated.","length":20,"gc_pct":55,"tm_c":54.8,"pair_tm_diff":2},
-{"primer_id":"HP0020","name":"ChIP_NEG_desert-chr15_R","sequence":"GGATCCATCACCATCAATAACC","target":"Gene desert chr15 (chr15:70,644,478-70,644,564)","species":"Mus musculus","direction":"R","partner_id":"HP0019","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr15:70644478-70644564, 87 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest Oct4/Esrrb/Nanog peak 279 kb). source: PMC12325602, doi:10.1038/s41598-025-13316-5, Gene desert, ChIP-qPCR negative. Not yet bench-validated.","length":22,"gc_pct":45.5,"tm_c":52.8,"pair_tm_diff":2},
-{"primer_id":"HP0021","name":"ChIP_NEG_desert-chr3_F","sequence":"GCCCTTGGTCAGTCCTGTATC","target":"Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)","species":"Mus musculus","direction":"F","partner_id":"HP0022","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr3:39155908-39156046, 139 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest peak 64 kb, no RepeatMasker overlap). source: designed 2026-10-28 (primer3), not published. Not yet bench-validated.","length":21,"gc_pct":57.1,"tm_c":56.4,"pair_tm_diff":0.2},
-{"primer_id":"HP0022","name":"ChIP_NEG_desert-chr3_R","sequence":"ACACAGGGAATGCTGCTAAGG","target":"Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)","species":"Mus musculus","direction":"R","partner_id":"HP0021","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr3:39155908-39156046, 139 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest peak 64 kb, no RepeatMasker overlap). source: designed 2026-10-28 (primer3), not published. Not yet bench-validated.","length":21,"gc_pct":52.4,"tm_c":56.6,"pair_tm_diff":0.2}
+{"pair_id":"HP001","name":"ChIP_Oct4_Pou5f1-DE","target":"Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)","species":"Mus musculus","forward":"GACGGCAGATGCATAACAAA","reverse":"AGGAAGGGCTAGGACGAGAG","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr17:35504043-35504134, 92 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 229/225 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 229/225, Esrrb 40/32, Nanog 214/184. source: PMC4686221, doi:10.1371/journal.pone.0145336, Used as ChIP primer ('ChIP', Table 1). Not yet bench-validated.","forward_length":20,"forward_gc_pct":45,"forward_tm_c":53.3,"reverse_length":20,"reverse_gc_pct":60,"reverse_tm_c":56.4,"tm_diff":3.1},
+{"pair_id":"HP002","name":"ChIP_Oct4_Nanog-CR1","target":"Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)","species":"Mus musculus","forward":"GGTGGACCCTGCAGGTGGGATTAAC","reverse":"CCCCTATTCTCCCAGGCACCCAGGC","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr6:122707433-122707516, 84 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 163/149 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 163/149, Esrrb 45/31, Nanog -/23. source: PMC3985664, doi:10.1093/nar/gku092, Nanog CR1 primers used for Oct4 ChIP. Not yet bench-validated.","forward_length":25,"forward_gc_pct":60,"forward_tm_c":62.8,"reverse_length":25,"reverse_gc_pct":68,"reverse_tm_c":65.9,"tm_diff":3.1},
+{"pair_id":"HP003","name":"ChIP_Oct4_Rif1-prom","target":"Rif1 promoter (chr2:52,072,165-52,072,292)","species":"Mus musculus","forward":"CCAATTCTAGGCAGTTGCCT","reverse":"GGGAGTGTTGCTAAAGG","notes":"ChIP-qPCR. ChIP target: Oct4. Amplicon mm10 chr2:52072165-52072292, 128 bp; single product (bowtie2/in-silico PCR, mm10). Oct4 peak -log10q 256/268 (ChIP-Atlas SRX15046816/SRX15046817, q<1e-10); also Oct4 256/268, Esrrb 56/39, Nanog 82/120. source: PMC4669749, doi:10.1038/cddis.2014.551, Rif1-1, ChIP-qPCR primers; Oct4 ChIP. Not yet bench-validated.","forward_length":20,"forward_gc_pct":50,"forward_tm_c":54.2,"reverse_length":17,"reverse_gc_pct":52.9,"reverse_tm_c":48.7,"tm_diff":5.5},
+{"pair_id":"HP004","name":"ChIP_Esrrb_Sox2-SE","target":"Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)","species":"Mus musculus","forward":"TAGAGGAAGGAGCTGGAGGA","reverse":"AAGGAAAGAAGGAGGGACGG","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr3:34761502-34761711, 210 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 96/52 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 39/48, Esrrb 96/52, Nanog 61/89. source: PMC8149872, doi:10.1038/s41467-021-23500-6, Sox2 SE, ChIP-qPCR primers. Not yet bench-validated.","forward_length":20,"forward_gc_pct":55,"forward_tm_c":55,"reverse_length":20,"reverse_gc_pct":55,"reverse_tm_c":55.4,"tm_diff":0.4},
+{"pair_id":"HP005","name":"ChIP_Esrrb_Specc1-int","target":"Specc1 intronic site (chr11:62,215,225-62,215,303)","species":"Mus musculus","forward":"GTGTTAGAGTGCTTTGTCCCC","reverse":"CTCAAAGGAGACAGGTGCCA","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr11:62215225-62215303, 79 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 47/70 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 136/147, Esrrb 47/70, Nanog 281/298. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r7_set2, ChIP-qPCR. Not yet bench-validated.","forward_length":21,"forward_gc_pct":52.4,"forward_tm_c":55.2,"reverse_length":20,"reverse_gc_pct":55,"reverse_tm_c":56,"tm_diff":0.8},
+{"pair_id":"HP006","name":"ChIP_Esrrb_Pramel7-up","target":"Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)","species":"Mus musculus","forward":"GTGTAACTGAAGGTGACCCTGAAC","reverse":"AGTCTAAAGGTTCAACAGCCACAG","notes":"ChIP-qPCR. ChIP target: Esrrb. Amplicon mm10 chr2:87481269-87481382, 114 bp; single product (bowtie2/in-silico PCR, mm10). Esrrb peak -log10q 90/38 (ChIP-Atlas SRX15046892/SRX093166, q<1e-10); also Oct4 85/94, Esrrb 90/38, Nanog 50/55. source: PMC13601577, doi:10.1038/s44319-026-00881-7, Pramel7, ChIP-qPCR primers. Not yet bench-validated.","forward_length":24,"forward_gc_pct":50,"forward_tm_c":57.2,"reverse_length":24,"reverse_gc_pct":45.8,"reverse_tm_c":56.9,"tm_diff":0.3},
+{"pair_id":"HP007","name":"ChIP_Nanog_Mgat4e-up","target":"Mgat4e upstream site (chr1:134,535,097-134,535,260)","species":"Mus musculus","forward":"CCCCACAGACTGAGAATGGC","reverse":"CCCCTACCTTTGGCATCCTG","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:134535097-134535260, 164 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 333/285 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 138/134, Esrrb -/-, Nanog 333/285. source: PMC12325602, doi:10.1038/s41598-025-13316-5, Nanog_r3_set1, ChIP-qPCR of Nanog-bound region. Not yet bench-validated.","forward_length":20,"forward_gc_pct":60,"forward_tm_c":56.8,"reverse_length":20,"reverse_gc_pct":60,"reverse_tm_c":56.5,"tm_diff":0.3},
+{"pair_id":"HP008","name":"ChIP_Nanog_Xist-int1B","target":"Xist intron 1 (site B) (chrX:103,472,430-103,472,528)","species":"Mus musculus","forward":"ATGTTTCCTTTTGAAGCAGTTACTTGTAC","reverse":"CATTGTCTGGCTCTCTAGGTGATAATAC","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chrX:103472430-103472528, 99 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 204/253 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 181/193, Esrrb -/-, Nanog 204/253. source: PMC2933617, doi:10.1186/1471-213X-10-90, primers p65/p66, Xist intron 1 site B; Oct4 ChIP. Not yet bench-validated.","forward_length":29,"forward_gc_pct":34.5,"forward_tm_c":56.6,"reverse_length":28,"reverse_gc_pct":42.9,"reverse_tm_c":56.6,"tm_diff":0},
+{"pair_id":"HP009","name":"ChIP_Nanog_Lefty1-up","target":"Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)","species":"Mus musculus","forward":"GTAGCCAGCAGACAGGACAA","reverse":"ATCCCCAATCCACATTCA","notes":"ChIP-qPCR. ChIP target: Nanog. Amplicon mm10 chr1:180924761-180924890, 130 bp; single product (bowtie2/in-silico PCR, mm10). Nanog peak -log10q 193/277 (ChIP-Atlas SRX1141346/SRX8994334, q<1e-10); also Oct4 152/176, Esrrb 24/-, Nanog 193/277. source: PMC4669749, doi:10.1038/cddis.2014.551, Lefty1, ChIP-qPCR primers. Not yet bench-validated.","forward_length":20,"forward_gc_pct":55,"forward_tm_c":56.1,"reverse_length":18,"reverse_gc_pct":44.4,"reverse_tm_c":49.5,"tm_diff":6.6},
+{"pair_id":"HP010","name":"ChIP_NEG_desert-chr15","target":"Gene desert chr15 (chr15:70,644,478-70,644,564)","species":"Mus musculus","forward":"TCCTCCCCATCTGTGTCATC","reverse":"GGATCCATCACCATCAATAACC","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr15:70644478-70644564, 87 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest Oct4/Esrrb/Nanog peak 279 kb). source: PMC12325602, doi:10.1038/s41598-025-13316-5, Gene desert, ChIP-qPCR negative. Not yet bench-validated.","forward_length":20,"forward_gc_pct":55,"forward_tm_c":54.8,"reverse_length":22,"reverse_gc_pct":45.5,"reverse_tm_c":52.8,"tm_diff":2},
+{"pair_id":"HP011","name":"ChIP_NEG_desert-chr3","target":"Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)","species":"Mus musculus","forward":"GCCCTTGGTCAGTCCTGTATC","reverse":"ACACAGGGAATGCTGCTAAGG","notes":"ChIP-qPCR. negative control for Oct4, Esrrb and Nanog ChIP. Amplicon mm10 chr3:39155908-39156046, 139 bp; single product (bowtie2/in-silico PCR, mm10). no Oct4/Esrrb/Nanog ChIP-seq peak nearby (nearest peak 64 kb, no RepeatMasker overlap). source: designed 2026-10-28 (primer3), not published. Not yet bench-validated.","forward_length":21,"forward_gc_pct":57.1,"forward_tm_c":56.4,"reverse_length":21,"reverse_gc_pct":52.4,"reverse_tm_c":56.6,"tm_diff":0.2}
 ];
 const IDT_SCALES = ["25nm", "100nm", "250nm", "1um", "5um", "10um"];
 const IDT_PURIFICATIONS = ["STD", "PAGE", "HPLC", "IEHPLC", "RNASE", "DUALHPLC", "PAGEHPLC"];
 
 const COLS = [
   { key: "_sel", label: "", nosort: true },
-  { key: "primer_id", label: "ID" },
+  { key: "pair_id", label: "ID" },
   { key: "name", label: "Name" },
   { key: "target", label: "Target" },
-  { key: "direction", label: "Dir" },
-  { key: "sequence", label: "Sequence (5′→3′)" },
-  { key: "length", label: "nt", num: true },
-  { key: "gc_pct", label: "GC%", num: true, sm: true },
-  { key: "tm_c", label: "Tm °C", num: true },
-  { key: "pair_tm_diff", label: "ΔTm pair", num: true, sm: true },
+  { key: "forward", label: "Forward (5′→3′)" },
+  { key: "forward_tm_c", label: "Tm F", num: true },
+  { key: "reverse", label: "Reverse (5′→3′)" },
+  { key: "reverse_tm_c", label: "Tm R", num: true },
+  { key: "tm_diff", label: "ΔTm", num: true, sm: true },
   { key: "_notes", label: "", nosort: true }
 ];
 
-const byId = new Map(PRIMERS.map(p => [p.primer_id, p]));
 const selected = new Set();
 const openNotes = new Set();
-let sortKey = "primer_id", sortDir = 1;
+let sortKey = "pair_id", sortDir = 1;
 const $ = id => document.getElementById(id);
 
 function esc(s) {
@@ -173,7 +158,7 @@ function init() {
   for (const s of species) $("species").insertAdjacentHTML("beforeend", `<option>${esc(s)}</option>`);
   for (const s of IDT_SCALES) $("scale").insertAdjacentHTML("beforeend", `<option value="${s}">Scale ${s}</option>`);
   for (const s of IDT_PURIFICATIONS) $("purification").insertAdjacentHTML("beforeend", `<option value="${s}">${s === "STD" ? "Standard desalting" : s}</option>`);
-  $("sub").textContent = `${PRIMERS.length} primers · search, tick primers, then download an IDT order file`;
+  $("sub").textContent = `${PRIMERS.length} primer pairs · search, tick pairs, then download an IDT order file`;
   $("head").innerHTML = COLS.map(c =>
     `<th data-key="${c.key}" class="${c.nosort ? "nosort" : ""} ${c.sm ? "hide-sm" : ""}">${esc(c.label)} <span class="arrow"></span></th>`).join("");
   $("head").addEventListener("click", e => {
@@ -190,7 +175,7 @@ function init() {
     const b = e.target.closest(".notes-toggle"); if (!b) return;
     const id = b.dataset.id; openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render();
   });
-  $("selVisible").addEventListener("click", () => { visible().forEach(p => toggle(p.primer_id, true, true)); render(); });
+  $("selVisible").addEventListener("click", () => { visible().forEach(p => toggle(p.pair_id, true, true)); render(); });
   $("clear").addEventListener("click", () => { selected.clear(); render(); });
   $("format").addEventListener("change", updateBar);
   $("download").addEventListener("click", download);
@@ -204,7 +189,7 @@ function visible() {
   const sp = $("species").value, inNotes = $("inNotes").checked;
   const rows = PRIMERS.filter(p => {
     if (sp && p.species !== sp) return false;
-    const hay = [p.primer_id, p.name, p.target, p.sequence, inNotes ? p.notes : ""].join(" ").toLowerCase();
+    const hay = [p.pair_id, p.name, p.target, p.forward, p.reverse, inNotes ? p.notes : ""].join(" ").toLowerCase();
     return words.every(w => hay.includes(w));
   });
   const col = COLS.find(c => c.key === sortKey);
@@ -216,11 +201,13 @@ function visible() {
 }
 
 function toggle(id, on, quiet) {
-  const ids = [id];
-  const partner = byId.get(id)?.partner_id;
-  if ($("pairs").checked && partner && byId.has(partner)) ids.push(partner);
-  for (const i of ids) on ? selected.add(i) : selected.delete(i);
+  on ? selected.add(id) : selected.delete(id);
   if (!quiet) render();
+}
+
+function seqCell(p, dir) {
+  const gc = p[dir + "_gc_pct"];
+  return `<td class="seq">${esc(p[dir])}<span class="seqinfo">${p[dir + "_length"] ?? ""} nt${gc != null ? ` · ${gc}% GC` : ""}</span></td>`;
 }
 
 function render() {
@@ -230,67 +217,67 @@ function render() {
   });
   $("empty").hidden = rows.length > 0;
   $("body").innerHTML = rows.map(p => {
-    const sel = selected.has(p.primer_id);
-    const dtm = p.pair_tm_diff;
+    const sel = selected.has(p.pair_id);
+    const dtm = p.tm_diff;
     const main = `<tr class="${sel ? "sel" : ""}">
-      <td><input type="checkbox" data-id="${esc(p.primer_id)}" ${sel ? "checked" : ""} aria-label="Select ${esc(p.primer_id)}"></td>
-      <td class="id">${esc(p.primer_id)}</td>
+      <td><input type="checkbox" data-id="${esc(p.pair_id)}" ${sel ? "checked" : ""} aria-label="Select ${esc(p.pair_id)}"></td>
+      <td class="id">${esc(p.pair_id)}</td>
       <td>${esc(p.name)}</td>
       <td class="target">${esc(p.target)}</td>
-      <td><span class="dir">${esc(p.direction)}</span></td>
-      <td class="seq">${esc(p.sequence)}</td>
-      <td class="num">${p.length ?? ""}</td>
-      <td class="num hide-sm">${p.gc_pct ?? ""}</td>
-      <td class="num">${p.tm_c ?? "–"}</td>
-      <td class="num hide-sm ${dtm != null && dtm > 5 ? "flag" : ""}" title="${dtm != null && dtm > 5 ? "Pair Tm differs by more than 5 °C" : ""}">${dtm ?? ""}</td>
-      <td>${p.notes ? `<button class="notes-toggle" data-id="${esc(p.primer_id)}">${openNotes.has(p.primer_id) ? "Hide notes" : "Notes"}</button>` : ""}</td>
+      ${seqCell(p, "forward")}
+      <td class="num">${p.forward_tm_c ?? "–"}</td>
+      ${seqCell(p, "reverse")}
+      <td class="num">${p.reverse_tm_c ?? "–"}</td>
+      <td class="num hide-sm ${dtm != null && dtm > 5 ? "flag" : ""}" title="${dtm != null && dtm > 5 ? "Primer Tm differs by more than 5 °C" : ""}">${dtm ?? ""}</td>
+      <td>${p.notes ? `<button class="notes-toggle" data-id="${esc(p.pair_id)}">${openNotes.has(p.pair_id) ? "Hide notes" : "Notes"}</button>` : ""}</td>
     </tr>`;
-    const notes = openNotes.has(p.primer_id) ? `<tr class="notes"><td></td><td colspan="${COLS.length - 1}">${esc(p.notes)}</td></tr>` : "";
+    const notes = openNotes.has(p.pair_id) ? `<tr class="notes"><td></td><td colspan="${COLS.length - 1}">${esc(p.notes)}</td></tr>` : "";
     return main + notes;
   }).join("");
   updateBar();
 }
 
 function selectedRows() {
-  return PRIMERS.filter(p => selected.has(p.primer_id))
-    .sort((a, b) => a.primer_id.localeCompare(b.primer_id, undefined, { numeric: true }));
+  return PRIMERS.filter(p => selected.has(p.pair_id))
+    .sort((a, b) => a.pair_id.localeCompare(b.pair_id, undefined, { numeric: true }));
 }
 
 function updateBar() {
-  const n = selected.size, fmt = $("format").value, plate = fmt === "plate";
-  $("count").textContent = n;
+  const n = 2 * selected.size, fmt = $("format").value, plate = fmt === "plate";
+  $("count").textContent = selected.size;
   $("scale").hidden = $("purification").hidden = plate;
   $("fill").hidden = !plate;
   $("copy").hidden = fmt !== "tubes";
   $("download").disabled = $("copy").disabled = n === 0;
   const msg = $("msg"); msg.classList.remove("warn");
-  if (!n) msg.textContent = "Tick primers to order. Names are exported as <ID>_<name>.";
+  if (!n) msg.textContent = "Tick pairs to order; both primers of each pair are ordered, named <ID>_<name>_F and _R.";
   else if (plate) {
     const plates = Math.ceil(n / 96), last = n % 96 || 96;
     msg.textContent = `${n} oligos on ${plates} plate${plates > 1 ? "s" : ""}. Set scale and purification in IDT's plate form.`;
     if (last < 24) { msg.textContent += ` The last plate has ${last} oligos; IDT plate orders may need more.`; msg.classList.add("warn"); }
   } else {
-    const half = selectedRows().filter(p => p.partner_id && !selected.has(p.partner_id));
-    msg.textContent = `${n} tube${n > 1 ? "s" : ""}.` + (half.length ? ` Partner not selected for: ${half.map(p => p.primer_id).join(", ")}.` : "");
-    if (half.length) msg.classList.add("warn");
+    msg.textContent = `${n} tubes (${n / 2} pair${n > 2 ? "s" : ""}).`;
   }
 }
 
 // ---- IDT order tables (same layout as R/idt.R) ----
-const idtName = p => `${p.primer_id}_${p.name}`;
+// One oligo per primer, forward then reverse, named like pair_oligos() in R.
+const oligos = pairs => pairs.flatMap(p => [
+  { name: `${p.pair_id}_${p.name}_F`, seq: p.forward },
+  { name: `${p.pair_id}_${p.name}_R`, seq: p.reverse }]);
 function tubesTable(rows) {
   const scale = $("scale").value, pur = $("purification").value;
-  return [["Name", "Sequence", "Scale", "Purification"], ...rows.map(p => [idtName(p), p.sequence, scale, pur])];
+  return [["Name", "Sequence", "Scale", "Purification"], ...oligos(rows).map(o => [o.name, o.seq, scale, pur])];
 }
 function platesTables(rows) {
   const L = "ABCDEFGH".split("");
   const wells = [];
   if ($("fill").value === "cols") { for (let c = 1; c <= 12; c++) for (const r of L) wells.push(r + c); }
   else { for (const r of L) for (let c = 1; c <= 12; c++) wells.push(r + c); }
-  const out = [];
-  for (let i = 0; i < rows.length; i += 96) {
+  const out = [], ol = oligos(rows);
+  for (let i = 0; i < ol.length; i += 96) {
     out.push(["Plate" + (out.length + 1), [["Well Position", "Name", "Sequence"],
-      ...rows.slice(i, i + 96).map((p, j) => [wells[j], idtName(p), p.sequence])]]);
+      ...ol.slice(i, i + 96).map((o, j) => [wells[j], o.name, o.seq])]]);
   }
   return out;
 }
@@ -355,7 +342,7 @@ function download() {
 
 async function copy() {
   const f = orderFile();
-  try { await navigator.clipboard.writeText(f.text); $("msg").textContent = `Copied ${selected.size} lines. Paste into IDT bulk input (tab-delimited).`; }
+  try { await navigator.clipboard.writeText(f.text); $("msg").textContent = `Copied ${2 * selected.size} lines. Paste into IDT bulk input (tab-delimited).`; }
   catch { $("msg").textContent = "Copy failed in this browser; use Download instead."; }
 }
 

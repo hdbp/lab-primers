@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Validate primers.tsv, then regenerate the derived files in build/:
-#   build/primers_annotated.tsv  - table + length, GC%, Tm, pair Tm difference
-#   build/primers.fasta          - all primers as FASTA
+#   build/primers_annotated.tsv  - table + length, GC% and Tm of each primer, Tm difference
+#   build/primers.fasta          - every primer (both of each pair) as FASTA
 #   docs/index.html              - interactive page (search, select, IDT export)
 # Usage: Rscript R/build.R [primers.tsv] [out_dir] [page]
 
@@ -26,9 +26,9 @@ if (length(res$errors)) {
 
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 ann <- annotate_primers(df)
-ann <- ann[order(ann$primer_id), , drop = FALSE]
+ann <- ann[order(ann$pair_id), , drop = FALSE]
 utils::write.table(ann, file.path(out_dir, "primers_annotated.tsv"), sep = "\t",
                    quote = FALSE, row.names = FALSE, na = "")
 write_fasta(ann, file.path(out_dir, "primers.fasta"))
 write_html(ann, file.path(script_dir, "..", "web", "template.html"), page)
-message(sprintf("Wrote %d primers to %s/ and %s", nrow(ann), out_dir, page))
+message(sprintf("Wrote %d primer pairs to %s/ and %s", nrow(ann), out_dir, page))
