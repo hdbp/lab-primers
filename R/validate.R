@@ -14,6 +14,6 @@ res <- validate_primers(df)
 
 for (w in res$warnings) message("WARNING: ", w)
 for (e in res$errors) message("ERROR: ", e)
-message(sprintf("%s: %d primers, %d errors, %d warnings",
+message(sprintf("%s: %d primer pairs, %d errors, %d warnings",
                 path, nrow(df), length(res$errors), length(res$warnings)))
 if (length(res$errors)) quit(status = 1)

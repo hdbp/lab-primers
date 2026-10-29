@@ -1,12 +1,11 @@
 #!/usr/bin/env Rscript
-# Select primers from primers.tsv and write an IDT order file.
+# Select primer pairs from primers.tsv and write an IDT order file.
 #
 # Usage: Rscript R/export_idt.R [options]
-#   --ids=HP0001-HP0006,HP0019   primer IDs; ranges allowed
+#   --ids=HP001-HP006,HP010      pair IDs; ranges allowed
 #   --name=REGEX                 match on name     (case-insensitive)
 #   --target=REGEX               match on target
 #   --notes=REGEX                match on notes
-#   --no-partners                don't add the partner of each selected primer
 #   --format=tubes|tubes-xlsx|plate
 #                                tubes:      tab-separated text for IDT bulk input (default)
 #                                tubes-xlsx: the same as an Excel file
@@ -17,7 +16,8 @@
 #   --out=FILE                   default: orders/idt_<date>.<txt|xlsx>
 #   --table=primers.tsv          primer table to read
 #   --list                       show the selection; write nothing
-# Filters combine with AND; with no filter, every primer is selected.
+# Filters combine with AND; with no filter, every pair is selected.
+# Both primers of each selected pair are ordered.
 
 script_dir <- dirname(normalizePath(sub("^--file=", "",
   grep("^--file=", commandArgs(FALSE), value = TRUE)[1])))
@@ -32,7 +32,7 @@ opt <- function(key, default = NULL) {
 flag <- function(key) paste0("--", key) %in% args
 
 known <- c("ids", "name", "target", "notes", "format", "scale", "purification",
-           "fill", "out", "table", "no-partners", "list")
+           "fill", "out", "table", "list")
 bad <- args[!sub("=.*$", "", sub("^--", "", args)) %in% known | !startsWith(args, "--")]
 if (length(bad)) {
   message("unknown option: ", paste(bad, collapse = " "), " (see the top of R/export_idt.R)")
@@ -48,18 +48,18 @@ if (length(res$errors)) {
 }
 
 sel <- tryCatch(
-  select_primers(df, ids = opt("ids"), name = opt("name"), target = opt("target"),
-                 notes = opt("notes"), partners = !flag("no-partners")),
+  select_pairs(df, ids = opt("ids"), name = opt("name"), target = opt("target"),
+               notes = opt("notes")),
   error = function(e) { message("ERROR: ", conditionMessage(e)); quit(status = 1) })
 if (!nrow(sel)) {
-  message("No primers match.")
+  message("No primer pairs match.")
   quit(status = 1)
 }
-sel <- sel[order(sel$primer_id), , drop = FALSE]
+sel <- sel[order(sel$pair_id), , drop = FALSE]
 
 if (flag("list")) {
-  print(sel[, c("primer_id", "name", "sequence", "direction", "partner_id")], row.names = FALSE)
-  message(sprintf("%d primers selected.", nrow(sel)))
+  print(sel[, c("pair_id", "name", "forward", "reverse")], row.names = FALSE)
+  message(sprintf("%d pairs (%d primers) selected.", nrow(sel), 2 * nrow(sel)))
   quit(status = 0)
 }
 
@@ -76,8 +76,9 @@ if (fmt == "plate") {
   plates <- idt_plates(sel, fill = opt("fill", "cols"))
   names(plates) <- sprintf("Plate%d", seq_along(plates))
   write_xlsx(plates, out)
-  message(sprintf("Wrote %d primers on %d plate(s) to %s", nrow(sel), length(plates), out))
-  if (nrow(sel) %% 96 && nrow(sel) %% 96 < 24) {
+  n <- 2 * nrow(sel)
+  message(sprintf("Wrote %d primers on %d plate(s) to %s", n, length(plates), out))
+  if (n %% 96 && n %% 96 < 24) {
     message("Note: the last plate has fewer than 24 oligos; IDT plate orders may need more.")
   }
 } else {
@@ -89,6 +90,6 @@ if (fmt == "plate") {
   } else {
     write_xlsx(list(Tubes = tubes), out)
   }
-  message(sprintf("Wrote %d primers (%s, %s) to %s", nrow(sel), tubes$Scale[1],
+  message(sprintf("Wrote %d primers (%s, %s) to %s", nrow(tubes), tubes$Scale[1],
                   tubes$Purification[1], out))
 }

@@ -1,44 +1,56 @@
->HP0001 ChIP_Oct4_Pou5f1-DE_F|Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)|Mus musculus|F
+>HP001_ChIP_Oct4_Pou5f1-DE_F Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)|Mus musculus|F
 GACGGCAGATGCATAACAAA
->HP0002 ChIP_Oct4_Pou5f1-DE_R|Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)|Mus musculus|R
+>HP001_ChIP_Oct4_Pou5f1-DE_R Pou5f1 distal enhancer (-2 kb) (chr17:35,504,043-35,504,134)|Mus musculus|R
 AGGAAGGGCTAGGACGAGAG
->HP0003 ChIP_Oct4_Nanog-CR1_F|Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)|Mus musculus|F
+>HP002_ChIP_Oct4_Nanog-CR1_F Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)|Mus musculus|F
 GGTGGACCCTGCAGGTGGGATTAAC
->HP0004 ChIP_Oct4_Nanog-CR1_R|Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)|Mus musculus|R
+>HP002_ChIP_Oct4_Nanog-CR1_R Nanog promoter CR1 (Oct/Sox site) (chr6:122,707,433-122,707,516)|Mus musculus|R
 CCCCTATTCTCCCAGGCACCCAGGC
->HP0005 ChIP_Oct4_Rif1-prom_F|Rif1 promoter (chr2:52,072,165-52,072,292)|Mus musculus|F
+>HP003_ChIP_Oct4_Rif1-prom_F Rif1 promoter (chr2:52,072,165-52,072,292)|Mus musculus|F
 CCAATTCTAGGCAGTTGCCT
->HP0006 ChIP_Oct4_Rif1-prom_R|Rif1 promoter (chr2:52,072,165-52,072,292)|Mus musculus|R
+>HP003_ChIP_Oct4_Rif1-prom_R Rif1 promoter (chr2:52,072,165-52,072,292)|Mus musculus|R
 GGGAGTGTTGCTAAAGG
->HP0007 ChIP_Esrrb_Sox2-SE_F|Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)|Mus musculus|F
+>HP004_ChIP_Esrrb_Sox2-SE_F Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)|Mus musculus|F
 TAGAGGAAGGAGCTGGAGGA
->HP0008 ChIP_Esrrb_Sox2-SE_R|Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)|Mus musculus|R
+>HP004_ChIP_Esrrb_Sox2-SE_R Sox2 super-enhancer (SCR) (chr3:34,761,502-34,761,711)|Mus musculus|R
 AAGGAAAGAAGGAGGGACGG
->HP0009 ChIP_Esrrb_Specc1-int_F|Specc1 intronic site (chr11:62,215,225-62,215,303)|Mus musculus|F
+>HP005_ChIP_Esrrb_Specc1-int_F Specc1 intronic site (chr11:62,215,225-62,215,303)|Mus musculus|F
 GTGTTAGAGTGCTTTGTCCCC
->HP0010 ChIP_Esrrb_Specc1-int_R|Specc1 intronic site (chr11:62,215,225-62,215,303)|Mus musculus|R
+>HP005_ChIP_Esrrb_Specc1-int_R Specc1 intronic site (chr11:62,215,225-62,215,303)|Mus musculus|R
 CTCAAAGGAGACAGGTGCCA
->HP0011 ChIP_Esrrb_Pramel7-up_F|Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)|Mus musculus|F
+>HP006_ChIP_Esrrb_Pramel7-up_F Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)|Mus musculus|F
 GTGTAACTGAAGGTGACCCTGAAC
->HP0012 ChIP_Esrrb_Pramel7-up_R|Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)|Mus musculus|R
+>HP006_ChIP_Esrrb_Pramel7-up_R Pramel7 upstream enhancer (chr2:87,481,269-87,481,382)|Mus musculus|R
 AGTCTAAAGGTTCAACAGCCACAG
->HP0013 ChIP_Nanog_Mgat4e-up_F|Mgat4e upstream site (chr1:134,535,097-134,535,260)|Mus musculus|F
+>HP007_ChIP_Nanog_Mgat4e-up_F Mgat4e upstream site (chr1:134,535,097-134,535,260)|Mus musculus|F
 CCCCACAGACTGAGAATGGC
->HP0014 ChIP_Nanog_Mgat4e-up_R|Mgat4e upstream site (chr1:134,535,097-134,535,260)|Mus musculus|R
+>HP007_ChIP_Nanog_Mgat4e-up_R Mgat4e upstream site (chr1:134,535,097-134,535,260)|Mus musculus|R
 CCCCTACCTTTGGCATCCTG
->HP0015 ChIP_Nanog_Xist-int1B_F|Xist intron 1 (site B) (chrX:103,472,430-103,472,528)|Mus musculus|F
+>HP008_ChIP_Nanog_Xist-int1B_F Xist intron 1 (site B) (chrX:103,472,430-103,472,528)|Mus musculus|F
 ATGTTTCCTTTTGAAGCAGTTACTTGTAC
->HP0016 ChIP_Nanog_Xist-int1B_R|Xist intron 1 (site B) (chrX:103,472,430-103,472,528)|Mus musculus|R
+>HP008_ChIP_Nanog_Xist-int1B_R Xist intron 1 (site B) (chrX:103,472,430-103,472,528)|Mus musculus|R
 CATTGTCTGGCTCTCTAGGTGATAATAC
->HP0017 ChIP_Nanog_Lefty1-up_F|Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)|Mus musculus|F
+>HP009_ChIP_Nanog_Lefty1-up_F Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)|Mus musculus|F
 GTAGCCAGCAGACAGGACAA
->HP0018 ChIP_Nanog_Lefty1-up_R|Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)|Mus musculus|R
+>HP009_ChIP_Nanog_Lefty1-up_R Lefty1 upstream enhancer (chr1:180,924,761-180,924,890)|Mus musculus|R
 ATCCCCAATCCACATTCA
->HP0019 ChIP_NEG_desert-chr15_F|Gene desert chr15 (chr15:70,644,478-70,644,564)|Mus musculus|F
+>HP010_ChIP_NEG_desert-chr15_F Gene desert chr15 (chr15:70,644,478-70,644,564)|Mus musculus|F
 TCCTCCCCATCTGTGTCATC
->HP0020 ChIP_NEG_desert-chr15_R|Gene desert chr15 (chr15:70,644,478-70,644,564)|Mus musculus|R
+>HP010_ChIP_NEG_desert-chr15_R Gene desert chr15 (chr15:70,644,478-70,644,564)|Mus musculus|R
 GGATCCATCACCATCAATAACC
->HP0021 ChIP_NEG_desert-chr3_F|Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)|Mus musculus|F
+>HP011_ChIP_NEG_desert-chr3_F Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)|Mus musculus|F
 GCCCTTGGTCAGTCCTGTATC
->HP0022 ChIP_NEG_desert-chr3_R|Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)|Mus musculus|R
+>HP011_ChIP_NEG_desert-chr3_R Gene desert chr3 (designed) (chr3:39,155,908-39,156,046)|Mus musculus|R
 ACACAGGGAATGCTGCTAAGG
+>HP012_ChIP_H3K27me3_Otx1-CGI_F Otx1 CpG island (chr11:21,996,792-21,996,991)|Mus musculus|F
+AGTAGGCGTGCTCAGAGAGG
+>HP012_ChIP_H3K27me3_Otx1-CGI_R Otx1 CpG island (chr11:21,996,792-21,996,991)|Mus musculus|R
+GGCCGGTCAAGAAGAAGTC
+>HP013_ChIP_H3K27me3_Hoxb3-CGI_F Hoxb3 CpG island, HoxB cluster (chr11:96,345,820-96,346,046)|Mus musculus|F
+CCGTCGCATGAAGTACAAGA
+>HP013_ChIP_H3K27me3_Hoxb3-CGI_R Hoxb3 CpG island, HoxB cluster (chr11:96,345,820-96,346,046)|Mus musculus|R
+CCTTAAGAGGGGGCTGGTAG
+>HP014_ChIP_H3K27me3_Sox1-prom_F Sox1 promoter CpG island (chr8:12,396,031-12,396,117)|Mus musculus|F
+TGCACCTGTTTGCACAGTTCAG
+>HP014_ChIP_H3K27me3_Sox1-prom_R Sox1 promoter CpG island (chr8:12,396,031-12,396,117)|Mus musculus|R
+GTGCACAAACCACTTGCCAAAG

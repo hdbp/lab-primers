@@ -24,31 +24,36 @@ res <- validate_primers(ok)
 check("valid fixture has no errors", length(res$errors) == 0)
 check("valid fixture warns about ambiguity", any(grepl("ambiguity", res$warnings)))
 ann <- annotate_primers(ok)
-check("annotation adds length", identical(ann$length, c(20L, 20L, 20L)))
-check("pair Tm diff only for paired primers",
-      !is.na(ann$pair_tm_diff[1]) && is.na(ann$pair_tm_diff[3]))
+check("annotation adds length of each primer",
+      identical(ann$forward_length, c(20L, 20L)) && identical(ann$reverse_length, c(20L, 20L)))
+check("Tm diff is NA when a primer has no Tm",
+      !is.na(ann$tm_diff[1]) && is.na(ann$tm_diff[2]) && !is.na(ann$reverse_tm_c[2]))
+check("pair_oligos lists forward then reverse",
+      identical(pair_oligos(ok[1, ])$oligo, c("T001_test_F", "T001_test_R")))
+dup <- validate_primers(transform(ok[1, ], reverse = forward))$warnings
+check("warns when forward and reverse are identical", any(grepl("T001 forward, T001 reverse", dup, fixed = TRUE)))
 
 bad <- validate_primers(read_primers("tests/fixture_invalid.tsv"))$errors
-expect <- c("sequence must be uppercase", "duplicate primer_id 'B002'",
-            "direction must be 'F' or 'R'", "partner_id 'B999' does not exist",
-            "does not list 'B004' back", "has the same direction")
+expect <- c("forward must be uppercase", "duplicate pair_id 'B002'", "(B004): empty reverse")
 for (e in expect) check(paste("invalid fixture reports:", e), any(grepl(e, bad, fixed = TRUE)))
 
 source("R/idt.R")
-check("expand_ids expands a range", identical(expand_ids("HP0008-HP0011,T3"),
-      c("HP0008", "HP0009", "HP0010", "HP0011", "T3")))
+check("expand_ids expands a range", identical(expand_ids("HP008-HP011,T3"),
+      c("HP008", "HP009", "HP010", "HP011", "T3")))
 check("expand_ids rejects mixed prefixes",
       inherits(try(expand_ids("A01-B03"), silent = TRUE), "try-error"))
-check("select_primers adds the partner", identical(select_primers(ok, ids = "T001")$primer_id, c("T001", "T002")))
-check("select_primers without partners", identical(select_primers(ok, ids = "T001", partners = FALSE)$primer_id, "T001"))
-check("select_primers ANDs filters", identical(select_primers(ok, name = "_f$", target = "gene2")$primer_id, "T003"))
-check("select_primers rejects unknown IDs",
-      inherits(try(select_primers(ok, ids = "T999"), silent = TRUE), "try-error"))
-tubes <- idt_tubes(ok[1:2, ], scale = "100nm", purification = "PAGE")
+check("select_pairs by ID", identical(select_pairs(ok, ids = "T001")$pair_id, "T001"))
+check("select_pairs ANDs filters", identical(select_pairs(ok, name = "^deg", target = "gene2")$pair_id, "T002"))
+check("select_pairs ANDs filters to nothing", nrow(select_pairs(ok, name = "^deg", target = "gene1")) == 0)
+check("select_pairs rejects unknown IDs",
+      inherits(try(select_pairs(ok, ids = "T999"), silent = TRUE), "try-error"))
+tubes <- idt_tubes(ok[1, ], scale = "100nm", purification = "PAGE")
 check("idt_tubes has IDT bulk-input columns", identical(names(tubes), c("Name", "Sequence", "Scale", "Purification")))
-check("idt_tubes names carry the primer_id", identical(tubes$Name, c("T001_test_F", "T002_test_R")))
+check("idt_tubes orders both primers of a pair",
+      identical(tubes$Name, c("T001_test_F", "T001_test_R")) &&
+      identical(tubes$Sequence, c(ok$forward[1], ok$reverse[1])))
 check("idt_tubes rejects unknown scale", inherits(try(idt_tubes(ok, scale = "50nm"), silent = TRUE), "try-error"))
-big <- ok[rep(1, 100), ]
+big <- ok[rep(1, 50), ]   # 100 oligos
 plates <- idt_plates(big)
 check("idt_plates splits at 96 wells", identical(vapply(plates, nrow, 1L), c(`0` = 96L, `1` = 4L)))
 check("idt_plates fills by column", identical(plates[[1]]$`Well Position`[c(1, 2, 9, 96)], c("A1", "B1", "A2", "H12")))
@@ -72,7 +77,7 @@ page <- tempfile(fileext = ".html")
 write_html(annotate_primers(ok), "web/template.html", page)
 page_txt <- paste(readLines(page, warn = FALSE), collapse = "\n")
 check("page embeds the primer table",
-      grepl('"primer_id":"T001"', page_txt, fixed = TRUE) && !grepl("__PRIMERS_JSON__", page_txt, fixed = TRUE))
+      grepl('"pair_id":"T001"', page_txt, fixed = TRUE) && !grepl("__PRIMERS_JSON__", page_txt, fixed = TRUE))
 
 hdr <- read_primers("primers.tsv")
 check("primers.tsv has the expected columns", identical(names(hdr), PRIMER_COLUMNS))

@@ -1,14 +1,14 @@
 # lab-primers
 
-The lab's primer registry. One curated table, `primers.tsv`, is the source of truth; everything else is derived from it.
+The lab's primer registry. One curated table, `primers.tsv`, is the source of truth; everything else is derived from it. Each row is a primer pair: the forward and reverse primer side by side.
 
 ## Layout
 
 | Path | What it is |
 |---|---|
 | `primers.tsv` | The primer table. **Edit this.** |
-| `build/primers_annotated.tsv` | Generated: the table plus length, GC%, Tm, and the Tm difference to the partner primer. |
-| `build/primers.fasta` | Generated: all primers as FASTA (`>primer_id name\|target\|species\|direction`). |
+| `build/primers_annotated.tsv` | Generated: the table plus length, GC% and Tm of each primer, and the Tm difference between them. |
+| `build/primers.fasta` | Generated: every primer as FASTA, two records per pair (`><pair_id>_<name>_F target\|species\|F`). |
 | `R/primer_utils.R` | Validation and property functions (base R, no packages needed). |
 | `R/validate.R` | Checks `primers.tsv`; exits non-zero on errors. |
 | `R/build.R` | Validates, then regenerates `build/`. |
@@ -20,20 +20,19 @@ The lab's primer registry. One curated table, `primers.tsv`, is the source of tr
 
 ## Columns in `primers.tsv`
 
-Tab-separated, one primer per row, all columns present (leave optional ones empty).
+Tab-separated, one primer pair per row, all columns present (leave `notes` empty if there's nothing to say).
 
 | Column | Required | Rules |
 |---|---|---|
-| `primer_id` | yes | Unique. Letters, digits, `_ . -` only (e.g. `HP0001`). Never reuse an ID, even after a primer is retired. |
-| `name` | yes | Human-readable name, e.g. `H1-0_qPCR_F`. |
-| `sequence` | yes | 5'→3', uppercase IUPAC DNA (`ACGTRYSWKMBDHVN`), no spaces. Put modifications in `notes`. |
+| `pair_id` | yes | Unique. Letters, digits, `_ . -` only (e.g. `HP001`). Never reuse an ID, even after a pair is retired. |
+| `name` | yes | Human-readable name for the pair, e.g. `H1-0_qPCR`. Ordered primers are named `<pair_id>_<name>_F` and `_R`. |
 | `target` | yes | Gene symbol or locus, e.g. `H1-0`, `GAPDH`, `chr7:5,530,000`. |
 | `species` | yes | Binomial name, e.g. `Homo sapiens`, `Mus musculus`. |
-| `direction` | yes | `F` or `R`. |
-| `partner_id` | no | `primer_id` of the pair partner. Must be reciprocal and opposite direction. |
+| `forward` | yes | Forward primer, 5'→3', uppercase IUPAC DNA (`ACGTRYSWKMBDHVN`), no spaces. Put modifications in `notes`. |
+| `reverse` | yes | Reverse primer, same rules. |
 | `notes` | no | Free text. |
 
-`length`, `gc_pct`, and `tm_c` are **not** typed in by hand. `R/build.R` computes them, so they can't go stale.
+Length, GC% and Tm are **not** typed in by hand. `R/build.R` computes them, so they can't go stale.
 
 ## Adding primers
 
@@ -44,48 +43,48 @@ Rscript R/validate.R
 Rscript R/build.R
 # 3. commit primers.tsv with the regenerated build/ and docs/
 git add primers.tsv build/ docs/
-git commit -m "Add H1-0 qPCR primers"
+git commit -m "Add H1-0 qPCR primer pair"
 ```
 
 CI runs the tests, validates the table, and fails if `build/` or `docs/` was not regenerated.
 
 ### What validation checks
 
-Errors (block the build): missing or extra columns, empty required fields, duplicate IDs, invalid characters in a sequence, `direction` not `F`/`R`, a `partner_id` that doesn't exist or isn't reciprocal, partners with the same direction.
+Errors (block the build): missing or extra columns, empty required fields (including a missing forward or reverse primer), duplicate IDs, invalid characters in a sequence.
 
-Warnings: sequences shorter than 10 nt, ambiguity codes (Tm is left blank), identical sequences under different IDs, partners with a different target or species.
+Warnings: primers shorter than 10 nt, ambiguity codes (Tm is left blank), the same sequence used twice (in two pairs, or as both primers of one pair).
 
 ## Browsing and ordering in the browser
 
 Open `docs/index.html` (double-click it; no server or internet needed).
 
-- **Search:** matches ID, name, target and sequence. Several words must all match; use `"quoted phrases"`. Tick *Include notes* to search notes too.
+- **Search:** matches ID, name, target and both sequences. Several words must all match; use `"quoted phrases"`. Tick *Include notes* to search notes too.
 - **Filter and sort:** filter by species; click a column header to sort.
-- **Notes:** each primer's notes button shows its source paper, coordinates and validation status.
-- **Select:** tick primers. With *Keep pairs together* on, ticking a primer also ticks its partner. *Select shown* ticks everything the current search shows.
+- **Notes:** each pair's notes button shows its source paper, coordinates and validation status.
+- **Select:** tick pairs. Both primers of each ticked pair are ordered. *Select shown* ticks everything the current search shows.
 - **Order:** in the bottom bar, pick the IDT format, scale and purification, then **Download**. Formats and column layouts are the same as `R/export_idt.R` below. For tube text, **Copy** puts the lines on the clipboard to paste straight into IDT's bulk input.
 - **Warnings:**
-  - Pairs whose Tm differs by more than 5 °C are highlighted.
-  - The bar warns if a primer is selected without its partner, or a plate has fewer than 24 oligos.
+  - Pairs whose primers' Tm differs by more than 5 °C are highlighted.
+  - The bar warns if a plate has fewer than 24 oligos.
 
 The page is regenerated by `Rscript R/build.R`, so it always matches `primers.tsv`; CI fails if it's stale. To share it with the lab as a link, enable GitHub Pages for this repository (Settings → Pages → Deploy from a branch → `main`, folder `/docs`).
 
 ## Ordering from IDT (command line)
 
-`R/export_idt.R` selects primers from `primers.tsv` and writes a file to upload to IDT.
+`R/export_idt.R` selects primer pairs from `primers.tsv` and writes a file to upload to IDT, with both primers of each pair.
 
 ```bash
 # preview a selection (writes nothing)
 Rscript R/export_idt.R --name=esrrb --list
 # tubes: tab-separated text to paste or upload into IDT's bulk input
-Rscript R/export_idt.R --ids=HP0001-HP0006,HP0019
+Rscript R/export_idt.R --ids=HP001-HP003,HP010
 # the same as an Excel file, at 100 nmol with PAGE purification
 Rscript R/export_idt.R --target="lefty|xist" --format=tubes-xlsx --scale=100nm --purification=PAGE
 # a 96-well plate upload (Excel, one worksheet per plate)
 Rscript R/export_idt.R --notes="ChIP target: Oct4" --format=plate
 ```
 
-Selection: `--ids` takes IDs and ranges; `--name`, `--target` and `--notes` take case-insensitive regular expressions. Filters combine with AND, and with none every primer is selected. The partner of each selected primer is added automatically so pairs are never ordered half-complete; turn that off with `--no-partners`.
+Selection: `--ids` takes pair IDs and ranges; `--name`, `--target` and `--notes` take case-insensitive regular expressions. Filters combine with AND, and with none every pair is selected.
 
 | Format | File | Columns |
 |---|---|---|
@@ -93,7 +92,7 @@ Selection: `--ids` takes IDs and ranges; `--name`, `--target` and `--notes` take
 | `tubes-xlsx` | `.xlsx` | Name, Sequence, Scale, Purification |
 | `plate` | `.xlsx`, one sheet per 96-well plate | Well Position, Name, Sequence |
 
-- Names are `<primer_id>_<name>`, so tubes arriving from IDT can be matched back to the registry.
+- Names are `<pair_id>_<name>_F` and `_R`, forward first, so tubes arriving from IDT can be matched back to the registry.
 - Scale: `25nm` (default), `100nm`, `250nm`, `1um`, `5um`, `10um`. Purification: `STD` (default), `PAGE`, `HPLC`, `IEHPLC`, `RNASE`, `DUALHPLC`, `PAGEHPLC`. Scale and purification apply to tube orders; plates take those options in IDT's plate form.
 - Plates fill down columns (A1, B1, … H1, A2) by default; use `--fill=rows` for A1, A2, … A12, B1. IDT may require a minimum number of oligos per plate (24 is commonly quoted), so the script warns about small plates.
 - Output goes to `orders/idt_<format>_<date>.<ext>` unless you pass `--out`. `orders/` is git-ignored.
@@ -109,6 +108,6 @@ Nearest-neighbour model (SantaLucia 1998 unified parameters) with SantaLucia's e
 
 ```r
 source("R/primer_utils.R")
-p <- read.delim("build/primers_annotated.tsv", colClasses = c(primer_id = "character"))
+p <- read.delim("build/primers_annotated.tsv", colClasses = c(pair_id = "character"))
 subset(p, target == "GAPDH" & species == "Homo sapiens")
 ```
