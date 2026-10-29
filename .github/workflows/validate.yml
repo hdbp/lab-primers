@@ -14,10 +14,11 @@ jobs:
         run: Rscript tests/run_tests.R
       - name: Validate primers.tsv
         run: Rscript R/validate.R primers.tsv
-      - name: Check build/ is up to date
+      - name: Check build/ and docs/ are up to date
         run: |
           Rscript R/build.R
-          git diff --exit-code build/ || {
-            echo "::error::build/ is stale. Run 'Rscript R/build.R' and commit the result."
+          git add -N build/ docs/
+          git diff --exit-code build/ docs/ || {
+            echo "::error::build/ or docs/ is stale. Run 'Rscript R/build.R' and commit the result."
             exit 1
           }
