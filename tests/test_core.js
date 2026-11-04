@@ -54,8 +54,10 @@ check("rejects tabs inside a field", core.validate([{ ...ok[0], notes: "a\tb" }]
 check("warns when forward and reverse are identical",
   core.validate([{ ...ok[0], reverse: ok[0].forward }]).warnings.some(w => w.includes("T001 forward, T001 reverse")));
 
-check("nextPairId continues the HP series", core.nextPairId(rows) === "HP015");
-check("nextPairId skips IDs already taken", core.nextPairId(rows, ["HP015"]) === "HP016");
+// Expected IDs come from the live table so adding pairs doesn't break the test.
+const hpNext = n => "HP" + String(Math.max(...rows.map(r => +r.pair_id.slice(2))) + n).padStart(3, "0");
+check("nextPairId continues the HP series", core.nextPairId(rows) === hpNext(1));
+check("nextPairId skips IDs already taken", core.nextPairId(rows, [hpNext(1)]) === hpNext(2));
 check("nextPairId on an empty table", core.nextPairId([]) === "HP001");
 check("cleanSeq strips spaces, dashes and 5'/3' labels", core.cleanSeq("5'-acg tTG-3'") === "ACGTTG");
 
