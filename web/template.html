@@ -622,19 +622,26 @@ function initSettings() {
     const repo = $("s_repo").value.trim(), tok = $("s_gh").value.trim(), key = $("s_ak").value.trim();
     if (repo && !/^[\w.-]+\/[\w.-]+$/.test(repo)) { $("settingsMsg").textContent = "Repository must look like owner/name."; return; }
     const repoChanged = (repo || repoFromLocation() || DEFAULT_REPO) !== settings.repo;
+    // A rejected GitHub token must not stop the repository and Anthropic key from saving.
+    let tokProblem = "";
     if (tok) {
       $("settingsMsg").textContent = "Checking the GitHub token…";
       try {
         const info = await new GitHub(repo || settings.repo, tok).info();
-        if (!info.permissions || !info.permissions.push) { $("settingsMsg").textContent = "This token can read the repository but not write to it. Give it Contents and Pull requests write access."; return; }
-      } catch (err) { $("settingsMsg").textContent = "GitHub rejected the token: " + err.message; return; }
+        if (!info.permissions || !info.permissions.push) tokProblem = "This token can read the repository but not write to it. Give it Contents and Pull requests write access.";
+      } catch (err) { tokProblem = "GitHub rejected the token: " + err.message; }
     }
     store.set("repo", repo === repoFromLocation() || repo === DEFAULT_REPO ? "" : repo);
-    store.set("gh", tok); store.set("ak", key);
-    $("settingsDlg").close();
+    store.set("ak", key);
+    if (!tokProblem) store.set("gh", tok);
     if (key !== assistantKey) resetChat();
-    if (repoChanged) { loadDraft(); loadFromGitHub(); } else showSource();
     updateAsstHint();
+    if (repoChanged) { loadDraft(); loadFromGitHub(); } else showSource();
+    if (tokProblem) {
+      $("settingsMsg").textContent = tokProblem + " The other settings were saved; the GitHub token was not.";
+      return;
+    }
+    $("settingsDlg").close();
   });
 }
 function openSettings() {
