@@ -622,19 +622,26 @@ function initSettings() {
     const repo = $("s_repo").value.trim(), tok = $("s_gh").value.trim(), key = $("s_ak").value.trim();
     if (repo && !/^[\w.-]+\/[\w.-]+$/.test(repo)) { $("settingsMsg").textContent = "Repository must look like owner/name."; return; }
     const repoChanged = (repo || repoFromLocation() || DEFAULT_REPO) !== settings.repo;
+    // A rejected GitHub token must not stop the repository and Anthropic key from saving.
+    let tokProblem = "";
     if (tok) {
       $("settingsMsg").textContent = "Checking the GitHub token…";
       try {
         const info = await new GitHub(repo || settings.repo, tok).info();
-        if (!info.permissions || !info.permissions.push) { $("settingsMsg").textContent = "This token can read the repository but not write to it. Give it Contents and Pull requests write access."; return; }
-      } catch (err) { $("settingsMsg").textContent = "GitHub rejected the token: " + err.message; return; }
+        if (!info.permissions || !info.permissions.push) tokProblem = "This token can read the repository but not write to it. Give it Contents and Pull requests write access.";
+      } catch (err) { tokProblem = "GitHub rejected the token: " + err.message; }
     }
     store.set("repo", repo === repoFromLocation() || repo === DEFAULT_REPO ? "" : repo);
-    store.set("gh", tok); store.set("ak", key);
-    $("settingsDlg").close();
+    store.set("ak", key);
+    if (!tokProblem) store.set("gh", tok);
     if (key !== assistantKey) resetChat();
-    if (repoChanged) { loadDraft(); loadFromGitHub(); } else showSource();
     updateAsstHint();
+    if (repoChanged) { loadDraft(); loadFromGitHub(); } else showSource();
+    if (tokProblem) {
+      $("settingsMsg").textContent = tokProblem + " The other settings were saved; the GitHub token was not.";
+      return;
+    }
+    $("settingsDlg").close();
   });
 }
 function openSettings() {
@@ -805,13 +812,6 @@ async function sendToClaude() {
   const text = $("asstText").value.trim();
   if (!text || busy) return;
   if (!settings.ak) { openSettings(); return; }
-  let mod;
-  try { mod = await import("./assistant.js"); }
-  catch (e) { appendBot().querySelector(".txt").textContent = "Could not load the assistant (it needs an internet connection and the page served over http/https): " + e.message; return; }
-  if (!assistant || assistantKey !== settings.ak) {
-    assistant = new mod.Assistant(settings.ak, C.toTSV(applyDraft(base.rows)));
-    assistantKey = settings.ak;
-  }
   $("chips").hidden = true;
   $("asstText").value = "";
   $("asstLog").insertAdjacentHTML("beforeend", `<div class="bubble user">${esc(text)}</div>`);
@@ -819,7 +819,17 @@ async function sendToClaude() {
   let raw = "";
   busy = true; $("asstSend").disabled = true; $("asstStop").hidden = false;
   const scroll = () => { const l = $("asstLog"); l.scrollTop = l.scrollHeight; };
+  scroll();
   try {
+    if (!assistant || assistantKey !== settings.ak) {
+      status.textContent = "Loading the assistant…";
+      // assistant.js pulls the Anthropic SDK from cdn.jsdelivr.net; say so instead of hanging if that is blocked.
+      const mod = await Promise.race([import("./assistant.js"),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timed out after 30 s")), 30000))])
+        .catch(e => { throw new Error(`Could not load the Anthropic library from cdn.jsdelivr.net (${e.message}). An ad or privacy blocker, a browser setting or a network filter may be blocking that site.`); });
+      assistant = new mod.Assistant(settings.ak, C.toTSV(applyDraft(base.rows)));
+      assistantKey = settings.ak;
+    }
     await assistant.send(text, {
       onText: d => { raw += d; txt.innerHTML = richText(raw); scroll(); },
       onStatus: s => { status.textContent = s; },
